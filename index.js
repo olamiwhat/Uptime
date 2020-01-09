@@ -17,11 +17,14 @@ const server = http.createServer((req, res) => {
     const path = parsedUrl.pathname; // untrimmed path
     const trimmedPath = path.replace(/^\/+|\/+$/g, ''); // remove the slashes from both ends
 
+    // Get the http method
+    const method = req.method.toUpperCase();
+
     // send the response
     res.end(`Hello World\n`);
 
     // Log the request path
-    console.log(`Request received on path: `, trimmedPath);
+    console.log(`Request received on path: `, trimmedPath, `method: `, method);
 });
 
  //start the server and have it listen on port 3000
