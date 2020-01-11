@@ -4,7 +4,8 @@
 
  // Dependencies
  const http = require('http');
- const url = require ('url'); // library for all things url
+ const url = require('url'); // library for all things url
+ const { StringDecoder } = require('string_decoder'); // library to decode string
 
  // The server should respond to all requests with a string
 // create a server object
@@ -27,11 +28,25 @@ const server = http.createServer((req, res) => {
     // Get the headers as a object
     const headers = req.headers;
 
-    // send the response
-    res.end(`Hello World\n`);
+    // Get the payload (body of the request), if any
+    // payloads come in as a stream - a bit at a time.
+    // collects the stream as it comes in and collate it at the end of the stream
+    const decoder = new StringDecoder('utf-8');
+    let buffer = '';
+    req.on('data', (data)=> {
+        buffer += decoder.write(data); // decoder turns the data to a string
+    })
+    // On end of the stream;
+    req.on('end', ()=>{
+        buffer += decoder.end();
 
-    // Log the request path
-    console.log(`Request received with these: `,headers);
+        // send the response
+        res.end(`Hello World\n`);
+
+        // Log the request path
+        console.log(`Request received with the payload: `,buffer);
+    });
+    
 });
 
  //start the server and have it listen on port 3000
