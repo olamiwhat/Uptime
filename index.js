@@ -65,6 +65,7 @@ const server = http.createServer((req, res) => {
             const payloadString = JSON.stringify(payload);
 
             //return response
+            res.setHeader('content-Type', 'application/json')
             res.writeHead(statusCode);
             res.end(payloadString);
     
@@ -79,7 +80,7 @@ const server = http.createServer((req, res) => {
  server.listen(3000, ()=> console.log(`The server is listening on port 3000!`));
 
 
-// Define handlers to handle route request
+// Define route handlers
 const handlers = {};
 
 // sample handler
