@@ -6,6 +6,7 @@
  const http = require('http');
  const url = require('url'); // library for all things url
  const { StringDecoder } = require('string_decoder'); // library to decode string
+ const config = require('./config')
 
  // The server should respond to all requests with a string
 // create a server object
@@ -65,7 +66,7 @@ const server = http.createServer((req, res) => {
             const payloadString = JSON.stringify(payload);
 
             //return response
-            res.setHeader('content-Type', 'application/json')
+            res.setHeader('content-Type', 'application/json') // => responds with json data
             res.writeHead(statusCode);
             res.end(payloadString);
     
@@ -76,8 +77,8 @@ const server = http.createServer((req, res) => {
     
 });
 
- //start the server and have it listen on port 3000
- server.listen(3000, ()=> console.log(`The server is listening on port 3000!`));
+ //start the server and have it listen on the port based on the environment
+ server.listen(config.port, ()=> console.log(`The server is listening on port:`, config.port, `in env:`, config.envName));
 
 
 // Define route handlers
