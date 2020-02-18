@@ -11,6 +11,7 @@ const { StringDecoder } = require('string_decoder'); // library to decode string
 const fs = require('fs');
 const config = require('./config');
 
+
 // The server should respond to all http requests with a string
 // create a server object
 const httpServer = http.createServer((req, res) => {
