@@ -9,7 +9,9 @@ const https = require('https');
 const url = require('url'); // library for all things url
 const { StringDecoder } = require('string_decoder'); // library to decode string
 const fs = require('fs');
-const config = require('./config');
+const config = require('./lib/config');
+const handlers = require('./lib/handlers');
+const helpers = require('./lib/helpers');
 
 
 // The server should respond to all http requests with a string
@@ -40,7 +42,6 @@ httpsServer.listen(config.httpsPort, () => console.log('The server is listening 
 const unifiedServer = (req, res) => {
   // Get the url and parse it
   const parsedUrl = url.parse(req.url, true); // true => parse the query string too
-  console.log(parsedUrl);
 
   // Get the path from the url
   const path = parsedUrl.pathname; // untrimmed path
@@ -76,48 +77,37 @@ const unifiedServer = (req, res) => {
       queryStringObject,
       method,
       headers,
-      payload: buffer,
+      payload: helpers.parseJSONtoObject(buffer),
     };
 
     // Route the request to the handler specified in the router
     chosenHandler(data, (statusCode, payload) => {
       // use the status code sent by the handler or default to 200
-      statusCode = (statusCode) || 200;
+      statusCode = statusCode || 200;
 
       // the payload here is the response object that we get back from the handler
       // if the payload exist use it or default payload to {}
-      payload = (payload) || {};
+      payload = payload || {};
 
       // convert the payload to a string;
       const payloadString = JSON.stringify(payload);
 
+      console.log('payload :', payloadString);
+
       // return response
-      res.setHeader('content-Type', 'application/json'); // => responds with json data
-      res.writeHead(statusCode);
+      // res.setHeader('content-Type', 'application/json'); // => responds with json data
+      res.writeHead(statusCode, { 'content-Type': 'application/json' });
       res.end(payloadString);
 
-      // Log the request path
-      console.log('Returning this response: ', statusCode, payloadString);
+      // Log response
+      // console.log('Returning this response: ', statusCode, payloadString);
     });
   });
 };
 
 
-// Define route handlers
-const handlers = {};
-
-// ping handler => just to ping the monitor the app and find out if it's still alive
-handlers.ping = (data, callback) => {
-  // callback a http status code and a payload => no payload required here
-  callback(200);
-};
-
-// Not found handler
-handlers.notFound = (data, callback) => {
-  callback(404);
-};
-
 // Define a request router
 const router = {
   ping: handlers.ping,
+  users: handlers.users,
 };

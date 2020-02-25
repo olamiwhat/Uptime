@@ -29,7 +29,6 @@ handlers._users = {};
 // optional data: none
 handlers._users.post = function (data, callback) {
   // check that all required fields are filled out
-  console.log('data:', data.payload);
 
   const firstName = typeof (data.payload.firstName) === 'string' && data.payload.firstName.trim().length > 0 ? data.payload.firstName : false;
   const lastName = typeof (data.payload.lastName) === 'string' && data.payload.lastName.trim().length > 0 ? data.payload.lastName : false;
@@ -43,15 +42,15 @@ handlers._users.post = function (data, callback) {
       // if there is an error that means the user does not exist
       if (err) {
         // hash the password
-        const hashPassword = helpers.hash(password);
+        const hashedPassword = helpers.hash(password);
 
-        if (hashPassword) {
+        if (hashedPassword) {
           // create user object
           const userObj = {
             firstName,
             lastName,
             phone,
-            password: hashPassword,
+            password: hashedPassword,
             tosAgreement: true,
           };
 
@@ -71,23 +70,110 @@ handlers._users.post = function (data, callback) {
       }
     });
   } else {
-    callback(400, { Error: `Required fields are missing check - ${(!firstName) ? 'first Name' : (!lastName) ? 'Last Name' : 'others'}` });
+    callback(400, { Error: 'Required fields are missing' });
   }
 };
 
 // users - get
+// Required data: phone
+// optional data: None
+// @TODO only allow authenticated users access their own object
 handlers._users.get = function (data, callback) {
+  // check that the phone number provided is valid
 
+  const { phone } = data.queryStringObject;
+
+  if (phone && typeof (phone === 'string') && phone.trim().length === 10) {
+    // look up user by phone
+    _data.read('users', phone, (err, res) => {
+      if (!err && res) {
+        // remove the hashed password from the data
+        delete res.password;
+        callback(200, res);
+      } else {
+        callback(404);
+      }
+    });
+  } else {
+    callback(400, { Error: 'Missing required field' });
+  }
 };
 
 // users - put
+// required data - phone
+// optional data - first name, last name, password (at least one specified)
+// @TODO only let an authenticated user updata their own object
 handlers._users.put = function (data, callback) {
+  const {
+    phone, firstName, lastName, password,
+  } = data.payload;
 
+  if (phone && typeof (phone === 'string') && phone.trim().length === 10) {
+    // check for optional data to update
+    if ((lastName && typeof lastName === 'string' && lastName.trim().length > 0)
+    || (firstName && typeof firstName === 'string' && firstName.trim().length > 0)
+    || (password && typeof password === 'string' && password.trim().length > 0)) {
+      // look user up
+      _data.read('users', phone, (err, userData) => {
+        if (!err && userData) {
+          // update the necessary fields
+          if (firstName) {
+            userData.firstName = firstName;
+          }
+          if (lastName) {
+            userData.lastName = lastName;
+          }
+          if (password) {
+            userData.password = helpers.hash(password);
+          }
+          // store the new updates
+          _data.update('users', phone, userData, (err) => {
+            if (!err) {
+              callback(200, { success: 'Update Successful!' });
+            } else {
+              console.log(err);
+              callback(500, { Error: 'could not update user' });
+            }
+          });
+        } else {
+          callback(400, { Error: 'The specified user does not exist' });
+        }
+      });
+    } else {
+      callback(400, { Error: 'Missing required fields to update' });
+    }
+  } else {
+    callback(400, { Error: 'Missing required fields' });
+  }
 };
 
 // users - delete
+// @TODO  - only let authenticated user delete their own object
 handlers._users.delete = function (data, callback) {
+  // retrieve phone from request payload
+  const { phone } = data.payload;
 
+  if (phone && typeof (phone === 'string') && phone.trim().length === 10) {
+    // look up the user
+    _data.read('users', phone, (err, userData) => {
+      // if user exist, delete
+      if (!err && userData) {
+        _data.delete('users', phone, (err) => {
+          // if delete is successful
+          if (!err) {
+            callback(200, { Success: 'User successfully deleted!' });
+          } else {
+            console.log(err);
+            callback(500, { Error: 'Could not delete specified user' });
+          }
+        });
+      } else {
+        callback(400, { Error: 'User not found!' });
+      }
+    });
+  } else {
+    callback(400, { Error: 'Missing required field' });
+  }
 };
 
 // ping handler => just to ping the monitor the app and find out if it's still alive
