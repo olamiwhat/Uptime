@@ -1,7 +1,9 @@
 # Uptime - API Monitoring Tool
 
 Uptime is an API Monitoring Tool that was created using VANILLA NODE.
+
 No Frameworks, No Dependencies, No NPM
+
 A project I embarked on to master Node.js
 
 ## Getting Started
